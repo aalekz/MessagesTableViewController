@@ -36,24 +36,35 @@
 #import "JSMessageInputView.h"
 #import "JSBubbleView.h"
 #import "NSString+JSMessagesView.h"
-#import "UIImage+JSMessagesView.h"
 
 #define SEND_BUTTON_WIDTH 78.0f
 
 @interface JSMessageInputView ()
+
+@property (nonatomic, strong) UIImageView *inputFieldBack;
 
 - (void)setup;
 - (void)setupTextView;
 
 @end
 
-
-
 @implementation JSMessageInputView
 
 @synthesize sendButton;
 
 #pragma mark - Initialization
+
++ (void)initialize
+{
+    if (self != [JSMessageInputView class]) {
+        return;
+    }
+    
+    id appearance = [self appearance];
+    [appearance setBackgroundImage:[[UIImage imageNamed:@"input-bar"] resizableImageWithCapInsets:UIEdgeInsetsMake(19.0f, 3.0f, 19.0f, 3.0f)]];
+    [appearance setTextFieldbackgroundImage:[[UIImage imageNamed:@"input-field"] resizableImageWithCapInsets:UIEdgeInsetsMake(20.0f, 12.0f, 18.0f, 18.0f)]];
+}
+
 - (id)initWithFrame:(CGRect)frame
            delegate:(id<UITextViewDelegate>)delegate
 {
@@ -79,7 +90,6 @@
 #pragma mark - Setup
 - (void)setup
 {
-    self.image = [UIImage inputBar];
     self.backgroundColor = [UIColor whiteColor];
     self.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleTopMargin);
     self.opaque = YES;
@@ -100,7 +110,6 @@
     self.textView.scrollEnabled = YES;
     self.textView.scrollsToTop = NO;
     self.textView.userInteractionEnabled = YES;
-    self.textView.font = [JSBubbleView font];
     self.textView.textColor = [UIColor blackColor];
     self.textView.backgroundColor = [UIColor whiteColor];
     self.textView.keyboardAppearance = UIKeyboardAppearanceDefault;
@@ -108,15 +117,25 @@
     self.textView.returnKeyType = UIReturnKeyDefault;
     [self addSubview:self.textView];
 	
-    UIImageView *inputFieldBack = [[UIImageView alloc] initWithFrame:CGRectMake(self.textView.frame.origin.x - 1.0f,
-                                                                                0.0f,
-                                                                                self.textView.frame.size.width + 2.0f,
-                                                                                self.frame.size.height)];
-    inputFieldBack.image = [UIImage inputField];
-    inputFieldBack.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
-    inputFieldBack.backgroundColor = [UIColor clearColor];
-    [self addSubview:inputFieldBack];
+    self.inputFieldBack = [[UIImageView alloc] initWithFrame:CGRectMake(self.textView.frame.origin.x - 1.0f,
+                                                                        0.0f,
+                                                                        self.textView.frame.size.width + 2.0f,
+                                                                        self.frame.size.height)];
+
+    
+    self.inputFieldBack.autoresizingMask = (UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight);
+    self.inputFieldBack.backgroundColor = [UIColor clearColor];
+    [self addSubview:self.inputFieldBack];
 }
+
+//- (void)setFrame:(CGRect)frame
+//{
+//    [super setFrame:frame];
+//    
+//    CGFloat width = self.frame.size.width - self.sendButton.frame.size.width - 10.0f;
+//    self.textView.frame = CGRectMake(4.0f, 4.0f, width, self.textView.frame.size.height);
+//    self.inputFieldBack.frame = self.textView.frame;
+//}
 
 #pragma mark - Setters
 - (void)setSendButton:(UIButton *)btn
@@ -126,6 +145,22 @@
     
     sendButton = btn;
     [self addSubview:self.sendButton];
+}
+
+- (void)setBackgroundImage:(UIImage *)backgroundImage
+{
+    if(backgroundImage != _backgroundImage) {
+        _backgroundImage = backgroundImage;
+        self.image = _backgroundImage;
+    }
+}
+
+- (void)setTextFieldbackgroundImage:(UIImage *)textFieldbackgroundImage
+{
+    if(textFieldbackgroundImage != _textFieldbackgroundImage) {
+        _textFieldbackgroundImage = textFieldbackgroundImage;
+        self.inputFieldBack.image = _textFieldbackgroundImage;
+    }
 }
 
 #pragma mark - Message input view

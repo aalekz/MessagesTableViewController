@@ -35,19 +35,15 @@
 
 #import "JSMessagesViewController.h"
 #import "NSString+JSMessagesView.h"
-#import "UIView+AnimationOptionsForCurve.h"
-#import "UIColor+JSMessagesView.h"
 #import "JSDismissiveTextView.h"
 
 #define INPUT_HEIGHT 40.0f
 
 @interface JSMessagesViewController () <JSDismissiveTextViewDelegate>
 
+@property (nonatomic, strong) UIButton *sendButton;
 - (void)setup;
-
 @end
-
-
 
 @implementation JSMessagesViewController
 
@@ -67,8 +63,6 @@
 	self.tableView.dataSource = self;
 	self.tableView.delegate = self;
 	[self.view addSubview:self.tableView];
-	
-    [self setBackgroundColor:[UIColor messagesBackgroundColor]];
     
     CGRect inputFrame = CGRectMake(0.0f, size.height - INPUT_HEIGHT, size.width, INPUT_HEIGHT);
     self.inputToolBarView = [[JSMessageInputView alloc] initWithFrame:inputFrame delegate:self];
@@ -89,7 +83,16 @@
 
 - (UIButton *)sendButton
 {
-    return [UIButton defaultSendButton];
+    if(!_sendButton) {
+        _sendButton = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+        _sendButton.autoresizingMask = (UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleLeftMargin);
+        
+        NSString *title = NSLocalizedString(@"Send", nil);
+        [_sendButton setTitle:title forState:UIControlStateNormal];
+        [_sendButton setTitle:title forState:UIControlStateHighlighted];
+        [_sendButton setTitle:title forState:UIControlStateDisabled];
+    }
+    return _sendButton;
 }
 
 #pragma mark - View lifecycle
@@ -159,8 +162,9 @@
 #pragma mark - Actions
 - (void)sendPressed:(UIButton *)sender
 {
-    [self.delegate sendPressed:sender
-                      withText:[self.inputToolBarView.textView.text trimWhitespace]];
+    if([self.delegate sendPressed:sender withText:[self.inputToolBarView.textView.text trimWhitespace]]) {
+        [self finishSend];
+    }
 }
 
 #pragma mark - Table view data source
@@ -177,20 +181,17 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     JSBubbleMessageType type = [self.delegate messageTypeForRowAtIndexPath:indexPath];
-    JSBubbleMessageStyle bubbleStyle = [self.delegate messageStyleForRowAtIndexPath:indexPath];
-    JSAvatarStyle avatarStyle = [self.delegate avatarStyle];
     
     BOOL hasTimestamp = [self shouldHaveTimestampForRowAtIndexPath:indexPath];
     BOOL hasAvatar = [self shouldHaveAvatarForRowAtIndexPath:indexPath];
     
-    NSString *CellID = [NSString stringWithFormat:@"MessageCell_%d_%d_%d_%d", type, bubbleStyle, hasTimestamp, hasAvatar];
+    NSString *CellID = [NSString stringWithFormat:@"MessageCell_%d_%d_%d", type, hasTimestamp, hasAvatar];
     JSBubbleMessageCell *cell = (JSBubbleMessageCell *)[tableView dequeueReusableCellWithIdentifier:CellID];
     
     if(!cell)
         cell = [[JSBubbleMessageCell alloc] initWithBubbleType:type
-                                                   bubbleStyle:bubbleStyle
-                                                   avatarStyle:(hasAvatar) ? avatarStyle : JSAvatarStyleNone
                                                   hasTimestamp:hasTimestamp
+                                                     hasAvatar:[self shouldHaveAvatarForRowAtIndexPath:indexPath]
                                                reuseIdentifier:CellID];
     
     if(hasTimestamp)
@@ -209,7 +210,6 @@
     }
     
     [cell setMessage:[self.dataSource textForRowAtIndexPath:indexPath]];
-    [cell setBackgroundColor:tableView.backgroundColor];
     return cell;
 }
 
@@ -248,17 +248,16 @@
 
 - (BOOL)shouldHaveAvatarForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    switch ([self.delegate avatarPolicy]) {
-        case JSMessagesViewAvatarPolicyIncomingOnly:
-            return [self.delegate messageTypeForRowAtIndexPath:indexPath] == JSBubbleMessageTypeIncoming;
-            
-        case JSMessagesViewAvatarPolicyBoth:
-            return YES;
-            
-        case JSMessagesViewAvatarPolicyNone:
-        default:
-            return NO;
+    SEL selector = @selector(avatarImageForIncomingMessage);
+    if([self.delegate messageTypeForRowAtIndexPath:indexPath] == JSBubbleMessageTypeOutgoing) {
+        selector = @selector(avatarImageForOutgoingMessage);
     }
+    
+    if([self.dataSource respondsToSelector:selector]) {
+        return [self.dataSource performSelector:selector withObject:nil] != nil;
+    }
+    
+    return NO;
 }
 
 - (void)finishSend
@@ -368,7 +367,7 @@
     
     [UIView animateWithDuration:duration
                           delay:0.0f
-                        options:[UIView animationOptionsForCurve:curve]
+                        options:[[self class] animationOptionsForCurve:curve]
                      animations:^{
                          CGFloat keyboardY = [self.view convertRect:keyboardRect fromView:nil].origin.y;
                          
@@ -395,6 +394,27 @@
                      }
                      completion:^(BOOL finished) {
                      }];
+}
+
+#pragma mark - Animation util
++ (UIViewAnimationOptions)animationOptionsForCurve:(UIViewAnimationCurve)curve
+{
+    switch (curve) {
+        case UIViewAnimationCurveEaseInOut:
+            return UIViewAnimationOptionCurveEaseInOut;
+            break;
+        case UIViewAnimationCurveEaseIn:
+            return UIViewAnimationOptionCurveEaseIn;
+            break;
+        case UIViewAnimationCurveEaseOut:
+            return UIViewAnimationOptionCurveEaseOut;
+            break;
+        case UIViewAnimationCurveLinear:
+            return UIViewAnimationOptionCurveLinear;
+            break;
+    }
+    
+    return kNilOptions;
 }
 
 #pragma mark - Dismissive text view delegate

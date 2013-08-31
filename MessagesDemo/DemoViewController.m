@@ -30,13 +30,13 @@
 
 @implementation DemoViewController
 
-#pragma mark - Initialization
-- (UIButton *)sendButton
-{
-    // Override to use a custom send button
-    // The button's frame is set automatically for you
-    return [UIButton defaultSendButton];
-}
+//- (UIButton *)sendButton
+//{
+//    if(!_sendButton) {
+//        _sendButton = [UIButton buttonWithType:UIButtonTypeSystem];
+//    }
+//    return _sendButton;
+//}
 
 #pragma mark - View lifecycle
 - (void)viewDidLoad
@@ -46,6 +46,8 @@
     self.dataSource = self;
     
     self.title = @"Messages";
+    
+    self.backgroundColor = [UIColor whiteColor];
     
     self.messages = [[NSMutableArray alloc] initWithObjects:
                      @"Testing some messages here.",
@@ -80,18 +82,13 @@
 }
 
 #pragma mark - Messages view delegate
-- (void)sendPressed:(UIButton *)sender withText:(NSString *)text
+- (BOOL)sendPressed:(UIButton *)sender withText:(NSString *)text
 {
     [self.messages addObject:text];
     
     [self.timestamps addObject:[NSDate date]];
     
-    if((self.messages.count - 1) % 2)
-        [JSMessageSoundEffect playMessageSentSound];
-    else
-        [JSMessageSoundEffect playMessageReceivedSound];
-    
-    [self finishSend];
+    return YES;
 }
 
 - (JSBubbleMessageType)messageTypeForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -99,31 +96,10 @@
     return (indexPath.row % 2) ? JSBubbleMessageTypeIncoming : JSBubbleMessageTypeOutgoing;
 }
 
-- (JSBubbleMessageStyle)messageStyleForRowAtIndexPath:(NSIndexPath *)indexPath
-{
-    return JSBubbleMessageStyleSquare;
-}
-
 - (JSMessagesViewTimestampPolicy)timestampPolicy
 {
     return JSMessagesViewTimestampPolicyEveryThree;
 }
-
-- (JSMessagesViewAvatarPolicy)avatarPolicy
-{
-    return JSMessagesViewAvatarPolicyBoth;
-}
-
-- (JSAvatarStyle)avatarStyle
-{
-    return JSAvatarStyleSquare;
-}
-
-//  Optional delegate method
-//  Required if using `JSMessagesViewTimestampPolicyCustom`
-//
-//  - (BOOL)hasTimestampForRowAtIndexPath:(NSIndexPath *)indexPath
-//
 
 #pragma mark - Messages view data source
 - (NSString *)textForRowAtIndexPath:(NSIndexPath *)indexPath

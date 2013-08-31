@@ -36,20 +36,12 @@
 #import <UIKit/UIKit.h>
 #import "JSBubbleView.h"
 
-typedef enum {
-    JSAvatarStyleCircle = 0,
-    JSAvatarStyleSquare,
-    JSAvatarStyleNone
-} JSAvatarStyle;
-
-
 @interface JSBubbleMessageCell : UITableViewCell
 
 #pragma mark - Initialization
 - (id)initWithBubbleType:(JSBubbleMessageType)type
-             bubbleStyle:(JSBubbleMessageStyle)bubbleStyle
-             avatarStyle:(JSAvatarStyle)avatarStyle
             hasTimestamp:(BOOL)hasTimestamp
+               hasAvatar:(BOOL)hasAvatar
          reuseIdentifier:(NSString *)reuseIdentifier;
 
 #pragma mark - Message cell

@@ -28,6 +28,8 @@
 
 #import "AppDelegate.h"
 #import "DemoViewController.h"
+#import "JSBubbleView.h"
+#import "JSMessageInputView.h"
 
 @implementation AppDelegate
 
@@ -40,9 +42,28 @@
 	self.window.rootViewController = nc;
 	[self.window makeKeyAndVisible];
     
+    [self customizeUI];
+    
     return YES;
 }
-							
+
+- (void)customizeUI
+{
+    [[JSBubbleView appearance] setBubbleImageIncoming:[[UIImage imageNamed:@"message_sender"] resizableImageWithCapInsets:UIEdgeInsetsMake(20.0f, 24.0f, 4.0f, 4.0f) resizingMode:UIImageResizingModeStretch]];
+    [[JSBubbleView appearance] setBubbleImageIncomingHighlighted:[[UIImage imageNamed:@"message_sender"] resizableImageWithCapInsets:UIEdgeInsetsMake(20.0f, 24.0f, 4.0f, 4.0f) resizingMode:UIImageResizingModeStretch]];
+    [[JSBubbleView appearance] setBubbleImageOutgoing:[[UIImage imageNamed:@"message_receiver"] resizableImageWithCapInsets:UIEdgeInsetsMake(20.0f, 10.0f, 4.0f, 24.0f) resizingMode:UIImageResizingModeStretch]];
+    [[JSBubbleView appearance] setBubbleImageOutgoingHighlighted:[[UIImage imageNamed:@"message_receiver"] resizableImageWithCapInsets:UIEdgeInsetsMake(20.0f, 10.0f, 4.0f, 24.0f) resizingMode:UIImageResizingModeStretch]];
+   
+    [[JSBubbleView appearance] setFont:[UIFont systemFontOfSize:14.0f]];
+    [[JSBubbleView appearance] setTextColorIncoming:[UIColor whiteColor]];
+    [[JSBubbleView appearance] setTextColorOutgoing:[UIColor grayColor]];
+    
+    [[JSMessageInputView appearance] setBackgroundImage:[UIImage imageNamed:@"messagebar"]];
+    [[JSMessageInputView appearance] setTextFieldbackgroundImage:[[UIImage imageNamed:@"messagefield"] resizableImageWithCapInsets:UIEdgeInsetsMake(14.0f, 14.0f, 14.0f, 14.0f)]];
+    
+//    [[UIButton appearanceWhenContainedIn:[JSMessageInputView class], nil] setBackgroundImage:[UIImage imageNamed:@"send_button"] forState:UIControlStateNormal];
+}
+
 - (void)applicationWillResignActive:(UIApplication *)application { }
 
 - (void)applicationDidEnterBackground:(UIApplication *)application { }

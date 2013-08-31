@@ -43,39 +43,32 @@ typedef enum {
 } JSBubbleMessageType;
 
 
-typedef enum {
-    JSBubbleMessageStyleDefault = 0,
-    JSBubbleMessageStyleSquare,
-    JSBubbleMessageStyleDefaultGreen
-} JSBubbleMessageStyle;
-
-
 @interface JSBubbleView : UIView
 
 @property (assign, nonatomic) JSBubbleMessageType type;
-@property (assign, nonatomic) JSBubbleMessageStyle style;
 @property (copy, nonatomic) NSString *text;
 @property (assign, nonatomic) BOOL selectedToShowCopyMenu;
 
+@property (nonatomic, strong) UIImage *bubbleImageIncoming UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIImage *bubbleImageIncomingHighlighted UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIImage *bubbleImageOutgoing UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIImage *bubbleImageOutgoingHighlighted UI_APPEARANCE_SELECTOR;
+
+@property (nonatomic, strong) UIFont *font UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIColor *textColorIncoming UI_APPEARANCE_SELECTOR;
+@property (nonatomic, strong) UIColor *textColorOutgoing UI_APPEARANCE_SELECTOR;
+
 #pragma mark - Initialization
 - (id)initWithFrame:(CGRect)rect
-         bubbleType:(JSBubbleMessageType)bubleType
-        bubbleStyle:(JSBubbleMessageStyle)bubbleStyle;
+         bubbleType:(JSBubbleMessageType)bubleType;
 
 #pragma mark - Drawing
 - (CGRect)bubbleFrame;
-- (UIImage *)bubbleImage;
-- (UIImage *)bubbleImageHighlighted;
 
 #pragma mark - Bubble view
-+ (UIImage *)bubbleImageForType:(JSBubbleMessageType)aType
-                          style:(JSBubbleMessageStyle)aStyle;
-
-+ (UIFont *)font;
-
-+ (CGSize)textSizeForText:(NSString *)txt;
-+ (CGSize)bubbleSizeForText:(NSString *)txt;
-+ (CGFloat)cellHeightForText:(NSString *)txt;
++ (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font;
++ (CGSize)bubbleSizeForText:(NSString *)txt font:(UIFont *)font;
++ (CGFloat)cellHeightForText:(NSString *)txt font:(UIFont *)font;
 
 + (int)maxCharactersPerLine;
 + (int)numberOfLinesForMessage:(NSString *)txt;

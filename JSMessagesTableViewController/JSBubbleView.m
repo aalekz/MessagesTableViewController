@@ -36,7 +36,6 @@
 #import "JSBubbleView.h"
 #import "JSMessageInputView.h"
 #import "NSString+JSMessagesView.h"
-#import "UIImage+JSMessagesView.h"
 
 CGFloat const kJSAvatarSize = 50.0f;
 
@@ -50,9 +49,6 @@ CGFloat const kJSAvatarSize = 50.0f;
 
 - (void)setup;
 
-+ (UIImage *)bubbleImageTypeIncomingWithStyle:(JSBubbleMessageStyle)aStyle;
-+ (UIImage *)bubbleImageTypeOutgoingWithStyle:(JSBubbleMessageStyle)aStyle;
-
 @end
 
 
@@ -60,9 +56,25 @@ CGFloat const kJSAvatarSize = 50.0f;
 @implementation JSBubbleView
 
 @synthesize type;
-@synthesize style;
 @synthesize text;
 @synthesize selectedToShowCopyMenu;
+
++ (void)initialize
+{
+    if (self != [JSBubbleView class]) {
+        return;
+    }
+    
+    id appearance = [self appearance];
+    [appearance setBubbleImageIncoming:[[UIImage imageNamed:@"bubble-square-incoming"] resizableImageWithCapInsets:UIEdgeInsetsMake(15.0f, 25.0f, 16.0f, 23.0f)]];
+    [appearance setBubbleImageIncomingHighlighted:[[UIImage imageNamed:@"bubble-square-incoming-selected"] resizableImageWithCapInsets:UIEdgeInsetsMake(15.0f, 25.0f, 16.0f, 23.0f)]];
+    [appearance setBubbleImageOutgoing:[[UIImage imageNamed:@"bubble-square-outgoing"] resizableImageWithCapInsets:UIEdgeInsetsMake(15.0f, 20.0f, 15.0f, 20.0f)]];
+    [appearance setBubbleImageOutgoingHighlighted:[[UIImage imageNamed:@"bubble-square-outgoing-selected"] resizableImageWithCapInsets:UIEdgeInsetsMake(15.0f, 20.0f, 15.0f, 20.0f)]];
+    
+    [appearance setTextColorOutgoing:[UIColor darkTextColor]];
+    [appearance setTextColorIncoming:[UIColor darkTextColor]];
+    [appearance setFont:[UIFont systemFontOfSize:14.0f]];
+}
 
 #pragma mark - Setup
 - (void)setup
@@ -74,13 +86,11 @@ CGFloat const kJSAvatarSize = 50.0f;
 #pragma mark - Initialization
 - (id)initWithFrame:(CGRect)rect
          bubbleType:(JSBubbleMessageType)bubleType
-        bubbleStyle:(JSBubbleMessageStyle)bubbleStyle
 {
     self = [super initWithFrame:rect];
     if(self) {
         [self setup];
         self.type = bubleType;
-        self.style = bubbleStyle;
     }
     return self;
 }
@@ -97,12 +107,6 @@ CGFloat const kJSAvatarSize = 50.0f;
     [self setNeedsDisplay];
 }
 
-- (void)setStyle:(JSBubbleMessageStyle)newStyle
-{
-    style = newStyle;
-    [self setNeedsDisplay];
-}
-
 - (void)setText:(NSString *)newText
 {
     text = newText;
@@ -115,34 +119,24 @@ CGFloat const kJSAvatarSize = 50.0f;
     [self setNeedsDisplay];
 }
 
-#pragma mark - Drawing
-- (CGRect)bubbleFrame
-{
-    CGSize bubbleSize = [JSBubbleView bubbleSizeForText:self.text];
-    return CGRectMake((self.type == JSBubbleMessageTypeOutgoing ? self.frame.size.width - bubbleSize.width : 0.0f),
-                      kMarginTop,
-                      bubbleSize.width,
-                      bubbleSize.height);
-}
-
 - (UIImage *)bubbleImage
 {
-    return [JSBubbleView bubbleImageForType:self.type style:self.style];
+    return self.type == JSBubbleMessageTypeIncoming ? self.bubbleImageIncoming : self.bubbleImageOutgoing;
 }
 
 - (UIImage *)bubbleImageHighlighted
 {
-    switch (self.style) {
-        case JSBubbleMessageStyleDefault:
-        case JSBubbleMessageStyleDefaultGreen:
-            return (self.type == JSBubbleMessageTypeIncoming) ? [UIImage bubbleDefaultIncomingSelected] : [UIImage bubbleDefaultOutgoingSelected];
-            
-        case JSBubbleMessageStyleSquare:
-            return (self.type == JSBubbleMessageTypeIncoming) ? [UIImage bubbleSquareIncomingSelected] : [UIImage bubbleSquareOutgoingSelected];
-            
-        default:
-            return nil;
-    }
+    return self.type == JSBubbleMessageTypeIncoming ? self.bubbleImageIncomingHighlighted : self.bubbleImageOutgoingHighlighted;
+}
+
+#pragma mark - Drawing
+- (CGRect)bubbleFrame
+{
+    CGSize bubbleSize = [JSBubbleView bubbleSizeForText:self.text font:self.font];
+    return CGRectMake((self.type == JSBubbleMessageTypeOutgoing ? self.frame.size.width - bubbleSize.width : 0.0f),
+                      kMarginTop,
+                      bubbleSize.width,
+                      bubbleSize.height);
 }
 
 - (void)drawRect:(CGRect)frame
@@ -154,7 +148,7 @@ CGFloat const kJSAvatarSize = 50.0f;
     CGRect bubbleFrame = [self bubbleFrame];
 	[image drawInRect:bubbleFrame];
 	
-	CGSize textSize = [JSBubbleView textSizeForText:self.text];
+	CGSize textSize = [JSBubbleView textSizeForText:self.text font:self.font];
 	
     CGFloat textX = image.leftCapWidth - 3.0f + (self.type == JSBubbleMessageTypeOutgoing ? bubbleFrame.origin.x : 0.0f);
     
@@ -163,87 +157,38 @@ CGFloat const kJSAvatarSize = 50.0f;
                                   textSize.width,
                                   textSize.height);
     
+    UIColor *textColor = self.type == JSBubbleMessageTypeIncoming ? self.textColorIncoming : self.textColorOutgoing;
+    [textColor set];
+    
 	[self.text drawInRect:textFrame
-                 withFont:[JSBubbleView font]
+                 withFont:self.font
             lineBreakMode:NSLineBreakByWordWrapping
                 alignment:NSTextAlignmentLeft];
 }
 
 #pragma mark - Bubble view
-+ (UIImage *)bubbleImageForType:(JSBubbleMessageType)aType style:(JSBubbleMessageStyle)aStyle
-{
-    switch (aType) {
-        case JSBubbleMessageTypeIncoming:
-            return [self bubbleImageTypeIncomingWithStyle:aStyle];
-            
-        case JSBubbleMessageTypeOutgoing:
-            return [self bubbleImageTypeOutgoingWithStyle:aStyle];
-            
-        default:
-            return nil;
-    }
-}
 
-+ (UIImage *)bubbleImageTypeIncomingWithStyle:(JSBubbleMessageStyle)aStyle
-{
-    switch (aStyle) {
-        case JSBubbleMessageStyleDefault:
-            return [UIImage bubbleDefaultIncoming];
-            
-        case JSBubbleMessageStyleSquare:
-            return [UIImage bubbleSquareIncoming];
-            
-        case JSBubbleMessageStyleDefaultGreen:
-            return [UIImage bubbleDefaultIncomingGreen];
-            
-        default:
-            return nil;
-    }
-}
-
-+ (UIImage *)bubbleImageTypeOutgoingWithStyle:(JSBubbleMessageStyle)aStyle
-{
-    switch (aStyle) {
-        case JSBubbleMessageStyleDefault:
-            return [UIImage bubbleDefaultOutgoing];
-            
-        case JSBubbleMessageStyleSquare:
-            return [UIImage bubbleSquareOutgoing];
-            
-        case JSBubbleMessageStyleDefaultGreen:
-            return [UIImage bubbleDefaultOutgoingGreen];
-            
-        default:
-            return nil;
-    }
-}
-
-+ (UIFont *)font
-{
-    return [UIFont systemFontOfSize:16.0f];
-}
-
-+ (CGSize)textSizeForText:(NSString *)txt
++ (CGSize)textSizeForText:(NSString *)txt font:(UIFont *)font
 {
     CGFloat width = [UIScreen mainScreen].applicationFrame.size.width * 0.75f;
     CGFloat height = MAX([JSBubbleView numberOfLinesForMessage:txt],
                          [txt numberOfLines]) * [JSMessageInputView textViewLineHeight];
     
-    return [txt sizeWithFont:[JSBubbleView font]
+    return [txt sizeWithFont:font
            constrainedToSize:CGSizeMake(width - kJSAvatarSize, height + kJSAvatarSize)
                lineBreakMode:NSLineBreakByWordWrapping];
 }
 
-+ (CGSize)bubbleSizeForText:(NSString *)txt
++ (CGSize)bubbleSizeForText:(NSString *)txt font:(UIFont *)font
 {
-	CGSize textSize = [JSBubbleView textSizeForText:txt];
+	CGSize textSize = [JSBubbleView textSizeForText:txt font:font];
 	return CGSizeMake(textSize.width + kBubblePaddingRight,
                       textSize.height + kPaddingTop + kPaddingBottom);
 }
 
-+ (CGFloat)cellHeightForText:(NSString *)txt
++ (CGFloat)cellHeightForText:(NSString *)txt font:(UIFont *)font
 {
-    return [JSBubbleView bubbleSizeForText:txt].height + kMarginTop + kMarginBottom;
+    return [JSBubbleView bubbleSizeForText:txt font:font].height + kMarginTop + kMarginBottom;
 }
 
 + (int)maxCharactersPerLine

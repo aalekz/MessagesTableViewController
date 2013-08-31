@@ -40,6 +40,8 @@
 
 @property (strong, nonatomic) JSDismissiveTextView *textView;
 @property (strong, nonatomic) UIButton *sendButton;
+@property (strong, nonatomic) UIImage *backgroundImage UI_APPEARANCE_SELECTOR;
+@property (strong, nonatomic) UIImage *textFieldbackgroundImage UI_APPEARANCE_SELECTOR;
 
 #pragma mark - Initialization
 - (id)initWithFrame:(CGRect)frame
